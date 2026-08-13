@@ -1,0 +1,42 @@
+name: Decompile Dylib
+
+on:
+  workflow_dispatch:
+
+jobs:
+  decompile:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install class-dump
+        run: brew install class-dump
+
+      - name: Locate dylib
+        run: |
+          echo "Files in repo:"
+          find . -name "*.dylib"
+
+      # Đổi DYLIB_PATH thành đường dẫn thật tới file .dylib trong repo của bạn
+      - name: Run class-dump
+        run: |
+          mkdir -p output
+          DYLIB_PATH="26Anim.dylib"
+          class-dump -H "$DYLIB_PATH" -o output/headers > output/classdump.log 2>&1 || true
+          class-dump "$DYLIB_PATH" > output/classdump_full.log 2>&1 || true
+
+      - name: Run otool disassembly
+        run: |
+          DYLIB_PATH="26Anim.dylib"
+          otool -tV "$DYLIB_PATH" > output/otool_disasm.log 2>&1 || true
+          otool -L "$DYLIB_PATH" > output/otool_linked_libs.log 2>&1 || true
+          otool -o "$DYLIB_PATH" > output/otool_objc.log 2>&1 || true
+          nm -m "$DYLIB_PATH" > output/nm_symbols.log 2>&1 || true
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: decompile-output
+          path: output/
+          retention-days: 14

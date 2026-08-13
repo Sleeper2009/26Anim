@@ -11,14 +11,19 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install class-dump
-        run: brew install class-dump
+        run: |
+          curl -L -o class-dump.dmg https://github.com/nygard/class-dump/releases/download/3.5/class-dump-3.5.dmg
+          hdiutil attach class-dump.dmg -mountpoint /Volumes/class-dump
+          sudo cp /Volumes/class-dump/class-dump /usr/local/bin/class-dump
+          sudo chmod +x /usr/local/bin/class-dump
+          hdiutil detach /Volumes/class-dump
+          class-dump --version || true
 
       - name: Locate dylib
         run: |
           echo "Files in repo:"
           find . -name "*.dylib"
 
-      # Đổi DYLIB_PATH thành đường dẫn thật tới file .dylib trong repo của bạn
       - name: Run class-dump
         run: |
           mkdir -p output
